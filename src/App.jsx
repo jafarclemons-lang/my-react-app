@@ -131,7 +131,7 @@ function App() {
             <div className="p-2 bg-indigo-50 rounded-lg ring-1 ring-indigo-100">
               <Trophy className="text-indigo-600 w-5 h-5" />
             </div>
-            <h1 className="text-lg font-black text-slate-900 tracking-tight">GROWTH PRO</h1>
+            <h1 className="text-base font-black text-slate-900 tracking-tight">GROWTH PRO</h1>
           </div>
           <p className="text-[10px] text-indigo-600/70 font-bold uppercase tracking-[0.2em] ml-11">
             Mastery Workbook
