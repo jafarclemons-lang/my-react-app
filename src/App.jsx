@@ -133,7 +133,7 @@ function App() {
             </div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight">GROWTH PRO</h1>
           </div>
-          <p className="text-[10px] text-indigo-600/70 font-bold uppercase tracking-[0.2em] ml-11">
+          <p className="text-[6px] text-indigo-600/70 font-bold uppercase tracking-[0.2em] ml-11">
             Mastery Workbook
           </p>
         </div>
