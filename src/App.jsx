@@ -124,7 +124,7 @@ function App() {
     <div className="flex h-screen bg-slate-100 text-slate-800 overflow-hidden font-sans selection:bg-indigo-500/20 relative">
      
       {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-200 flex flex-col bg-white shrink-0 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+      <aside className="w-70 border-r border-slate-200 flex flex-col bg-white shrink-0 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="p-8 border-b border-slate-100 relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-emerald-400" />
           <div className="flex items-center gap-3 mb-1">
