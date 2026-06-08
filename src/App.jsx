@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   LayoutDashboard,
   BarChart3,
@@ -95,6 +97,150 @@ function App() {
     window.setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
+
+  const downloadBackup = () => {
+    const backup = {
+      app: 'Growth Pro Workbook',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      formData,
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+      type: 'application/json',
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'growth-pro-backup.json';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importBackup = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const backup = JSON.parse(e.target.result);
+
+        if (!backup.formData) {
+          alert('This backup file is missing workbook data.');
+          return;
+        }
+
+        setFormData(backup.formData);
+        localStorage.setItem('growth-workbook', JSON.stringify(backup.formData));
+        setSaveStatus('saved');
+        window.setTimeout(() => setSaveStatus('idle'), 2000);
+        alert('Backup imported successfully.');
+      } catch (error) {
+        alert('Could not import this file. Please use a valid Growth Pro backup JSON file.');
+      } finally {
+        event.target.value = '';
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
+  const createPdfHeader = (doc, title) => {
+    doc.setFontSize(18);
+    doc.text(title, 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+  };
+
+  const downloadUserPdf = () => {
+    const doc = new jsPDF();
+    createPdfHeader(doc, 'Growth Pro Workbook');
+
+    autoTable(doc, {
+      startY: 38,
+      head: [['Section', 'Response']],
+      body: [
+        ['Primary Goal', formData.goals.initialGoal || 'Not entered'],
+        ['Action Steps', formData.goals.actionSteps || 'Not entered'],
+        ['Community Pitch', formData.pitch || 'Not entered'],
+        ['Workflow Subtasks', formData.subtasks || 'Not entered'],
+        ['Green Zone', formData.stoplight.green || 'Not entered'],
+        ['Yellow Zone', formData.stoplight.yellow || 'Not entered'],
+        ['Red Zone', formData.stoplight.red || 'Not entered'],
+        ['Contact Delighters', formData.funnel.contact || 'Not entered'],
+        ['Lead Delighters', formData.funnel.lead || 'Not entered'],
+        ['Expert Delighters', formData.funnel.expert || 'Not entered'],
+        ['Prep Delighters', formData.funnel.prep || 'Not entered'],
+        ['Complete Delighters', formData.funnel.complete || 'Not entered'],
+      ],
+      styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
+      headStyles: { fillColor: [79, 70, 229] },
+      columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 130 } },
+    });
+
+    doc.save('growth-pro-workbook.pdf');
+  };
+
+  const downloadManagerPdf = () => {
+    const totalFunnelItems = Object.values(formData.funnel)
+      .join('\n')
+      .split('\n')
+      .filter((line) => line.trim()).length;
+
+    const trustBuilders = Object.entries(formData.trust)
+      .filter(([key, value]) => key.includes('Plus') && value.trim())
+      .length;
+
+    const trustBreakers = Object.entries(formData.trust)
+      .filter(([key, value]) => key.includes('Minus') && value.trim())
+      .length;
+
+    const doc = new jsPDF();
+    createPdfHeader(doc, 'Growth Pro Facilitator Report');
+
+    autoTable(doc, {
+      startY: 38,
+      head: [['Area', 'Summary']],
+      body: [
+        ['Primary Goal', formData.goals.initialGoal || 'No goal entered'],
+        ['Total Funnel Ideas', String(totalFunnelItems)],
+        ['Trust Builders Identified', String(trustBuilders)],
+        ['Trust Breakers Identified', String(trustBreakers)],
+        ['Core Pitch', formData.pitch || 'No pitch entered'],
+        ['Green Zone Takeaway', formData.stoplight.green || 'Not entered'],
+        ['Yellow Zone Watchout', formData.stoplight.yellow || 'Not entered'],
+        ['Red Zone Risk', formData.stoplight.red || 'Not entered'],
+      ],
+      styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
+      headStyles: { fillColor: [15, 23, 42] },
+      columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 120 } },
+    });
+
+    const finalY = (doc.lastAutoTable?.finalY || 120) + 12;
+
+    doc.setFontSize(14);
+    doc.text('Facilitator Coaching Prompts', 14, finalY);
+
+    doc.setFontSize(10);
+    doc.text(
+      [
+        '1. Where is the participant showing the strongest clarity or momentum?',
+        '2. Which funnel stage needs more ideas or stronger follow-through?',
+        '3. Which trust breaker should be addressed first?',
+        '4. How clear and customer-centered is the participant’s pitch?',
+        '5. What next-step commitment should the participant make after this review?',
+      ],
+      14,
+      finalY + 8,
+      { maxWidth: 180 }
+    );
+
+    doc.save('growth-pro-facilitator-report.pdf');
+  };
+
   const funnelProgress = useMemo(() => {
     const stages = ['contact', 'lead', 'expert', 'prep', 'complete'];
     return stages.map(
@@ -178,7 +324,7 @@ function App() {
             {modules.find((m) => m.id === activeModule)?.name}
           </h2>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 flex-wrap justify-end">
             {saveStatus === 'saved' && (
               <span className="text-sm font-medium text-emerald-600 flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300">
                 <CheckCircle2 size={16} />
@@ -188,10 +334,41 @@ function App() {
 
             <button
               onClick={handleSave}
-              className="bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-indigo-300 hover:text-indigo-600 px-6 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 flex items-center gap-2 shadow-sm"
+              className="bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-indigo-300 hover:text-indigo-600 px-4 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 flex items-center gap-2 shadow-sm"
             >
               <Sparkles size={16} className="text-indigo-500" />
               Save Progress
+            </button>
+
+            <button
+              onClick={downloadBackup}
+              className="bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-slate-400 px-4 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 shadow-sm"
+            >
+              Download Backup
+            </button>
+
+            <label className="bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-slate-400 px-4 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 shadow-sm cursor-pointer">
+              Import Backup
+              <input
+                type="file"
+                accept="application/json"
+                onChange={importBackup}
+                className="hidden"
+              />
+            </label>
+
+            <button
+              onClick={downloadUserPdf}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 shadow-sm"
+            >
+              User PDF
+            </button>
+
+            <button
+              onClick={downloadManagerPdf}
+              className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg font-bold text-sm transition-all duration-300 shadow-sm"
+            >
+              Manager PDF
             </button>
           </div>
         </header>
