@@ -148,47 +148,190 @@ function App() {
     reader.readAsText(file);
   };
 
-  const createPdfHeader = (doc, title) => {
+  const createPdfHeader = (doc, title, subtitle = '') => {
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, 0, 210, 30, 'F');
+
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
-    doc.text(title, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+    doc.text(title, 14, 17);
+
+    doc.setFontSize(9);
+    doc.text(subtitle || `Generated: ${new Date().toLocaleString()}`, 14, 25);
+
+    doc.setTextColor(30, 41, 59);
+  };
+
+  const addPdfSection = (doc, title, rows, startY, options = {}) => {
+    const pageHeight = doc.internal.pageSize.height;
+    let y = startY;
+
+    if (y > pageHeight - 35) {
+      doc.addPage();
+      createPdfHeader(doc, options.headerTitle || 'Growth Pro Workbook');
+      y = 42;
+    }
+
+    doc.setFontSize(14);
+    doc.setTextColor(...(options.titleColor || [79, 70, 229]));
+    doc.text(title, 14, y);
+
+    autoTable(doc, {
+      startY: y + 6,
+      head: [options.head || ['Section', 'Response']],
+      body: rows,
+      styles: {
+        fontSize: options.fontSize || 9,
+        cellPadding: 4,
+        overflow: 'linebreak',
+        valign: 'top',
+        textColor: [30, 41, 59],
+        lineColor: [226, 232, 240],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: options.headColor || [79, 70, 229],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252],
+      },
+      columnStyles: options.columnStyles || {
+        0: { cellWidth: 55, fontStyle: 'bold' },
+        1: { cellWidth: 125 },
+      },
+      margin: { left: 14, right: 14 },
+    });
+
+    return (doc.lastAutoTable?.finalY || y + 20) + 12;
   };
 
   const downloadUserPdf = () => {
     const doc = new jsPDF();
-    createPdfHeader(doc, 'Growth Pro Workbook');
 
-    autoTable(doc, {
-      startY: 38,
-      head: [['Section', 'Response']],
-      body: [
-        ['Primary Goal', formData.goals.initialGoal || 'Not entered'],
+    createPdfHeader(
+      doc,
+      'Growth Pro Mastery Workbook',
+      `Complete workbook export • Generated: ${new Date().toLocaleString()}`
+    );
+
+    let y = 42;
+
+    doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.text(
+      'This PDF includes the full participant workbook sections and responses entered in the online Growth Pro platform.',
+      14,
+      y,
+      { maxWidth: 180 }
+    );
+    y += 16;
+
+    y = addPdfSection(
+      doc,
+      'Dashboard & Goal Setting',
+      [
+        ['My Primary Goal', formData.goals.initialGoal || 'Not entered'],
         ['Action Steps', formData.goals.actionSteps || 'Not entered'],
-        ['Community Pitch', formData.pitch || 'Not entered'],
-        ['Workflow Subtasks', formData.subtasks || 'Not entered'],
-        ['Green Zone', formData.stoplight.green || 'Not entered'],
-        ['Yellow Zone', formData.stoplight.yellow || 'Not entered'],
-        ['Red Zone', formData.stoplight.red || 'Not entered'],
-        ['Contact Delighters', formData.funnel.contact || 'Not entered'],
-        ['Lead Delighters', formData.funnel.lead || 'Not entered'],
-        ['Expert Delighters', formData.funnel.expert || 'Not entered'],
-        ['Prep Delighters', formData.funnel.prep || 'Not entered'],
-        ['Complete Delighters', formData.funnel.complete || 'Not entered'],
       ],
-      styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
-      headStyles: { fillColor: [79, 70, 229] },
-      columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 130 } },
-    });
+      y
+    );
 
-    doc.save('growth-pro-workbook.pdf');
+    y = addPdfSection(
+      doc,
+      'Growth Blueprint - Funnel Delighters',
+      [
+        ['Contact', formData.funnel.contact || 'Not entered'],
+        ['Lead', formData.funnel.lead || 'Not entered'],
+        ['Expert', formData.funnel.expert || 'Not entered'],
+        ['Prep', formData.funnel.prep || 'Not entered'],
+        ['Complete', formData.funnel.complete || 'Not entered'],
+      ],
+      y
+    );
+
+    y = addPdfSection(
+      doc,
+      'The Success Stoplight',
+      [
+        ['Green Zone - Optimal Behavior', formData.stoplight.green || 'Not entered'],
+        ['Yellow Zone - Warning Signs', formData.stoplight.yellow || 'Not entered'],
+        ['Red Zone - Danger Zone', formData.stoplight.red || 'Not entered'],
+      ],
+      y,
+      { headColor: [16, 185, 129] }
+    );
+
+    y = addPdfSection(
+      doc,
+      'Trust Advocates',
+      [
+        ['Credibility - Builders', formData.trust.credPlus || 'Not entered'],
+        ['Credibility - Breakers', formData.trust.credMinus || 'Not entered'],
+        ['Reliability - Builders', formData.trust.relPlus || 'Not entered'],
+        ['Reliability - Breakers', formData.trust.relMinus || 'Not entered'],
+        ['Intimacy - Builders', formData.trust.intPlus || 'Not entered'],
+        ['Intimacy - Breakers', formData.trust.intMinus || 'Not entered'],
+        ['Orientation - Builders', formData.trust.oriPlus || 'Not entered'],
+        ['Orientation - Breakers', formData.trust.oriMinus || 'Not entered'],
+      ],
+      y,
+      { headColor: [245, 158, 11] }
+    );
+
+    y = addPdfSection(
+      doc,
+      'Community Engagement Pitch',
+      [
+        ['Pitch Draft', formData.pitch || 'Not entered'],
+      ],
+      y,
+      { headColor: [124, 58, 237] }
+    );
+
+    y = addPdfSection(
+      doc,
+      'Time & Workflow',
+      [
+        ['Workflow Subtasking', formData.subtasks || 'Not entered'],
+      ],
+      y,
+      { headColor: [15, 23, 42] }
+    );
+
+    addPdfSection(
+      doc,
+      'CLIMB Notes',
+      [
+        ['C - Connect: Going Well', formData.climb.connectGood || 'Not entered'],
+        ['C - Connect: Better Next Time', formData.climb.connectBetter || 'Not entered'],
+        ['L - Listen & Question: Going Well', formData.climb.listenGood || 'Not entered'],
+        ['L - Listen & Question: Better Next Time', formData.climb.listenBetter || 'Not entered'],
+        ['I - Identify Opportunity: Going Well', formData.climb.identifyGood || 'Not entered'],
+        ['I - Identify Opportunity: Better Next Time', formData.climb.identifyBetter || 'Not entered'],
+        ['M - Message Value: Going Well', formData.climb.messageGood || 'Not entered'],
+        ['M - Message Value: Better Next Time', formData.climb.messageBetter || 'Not entered'],
+        ['B - Build Commitment: Going Well', formData.climb.commitGood || 'Not entered'],
+        ['B - Build Commitment: Better Next Time', formData.climb.commitBetter || 'Not entered'],
+      ],
+      y,
+      { headColor: [37, 99, 235] }
+    );
+
+    doc.save('growth-pro-complete-workbook.pdf');
   };
 
   const downloadManagerPdf = () => {
-    const totalFunnelItems = Object.values(formData.funnel)
-      .join('\n')
-      .split('\n')
-      .filter((line) => line.trim()).length;
+    const countLines = (value) =>
+      (value || '')
+        .split('\n')
+        .filter((line) => line.trim()).length;
+
+    const totalFunnelItems = Object.values(formData.funnel).reduce(
+      (total, value) => total + countLines(value),
+      0
+    );
 
     const trustBuilders = Object.entries(formData.trust)
       .filter(([key, value]) => key.includes('Plus') && value.trim())
@@ -198,43 +341,157 @@ function App() {
       .filter(([key, value]) => key.includes('Minus') && value.trim())
       .length;
 
+    const completedCoreSections = [
+      formData.goals.initialGoal,
+      formData.pitch,
+      formData.subtasks,
+      formData.stoplight.green,
+      formData.stoplight.yellow,
+      formData.stoplight.red,
+    ].filter((value) => value.trim()).length;
+
     const doc = new jsPDF();
-    createPdfHeader(doc, 'Growth Pro Facilitator Report');
 
-    autoTable(doc, {
-      startY: 38,
-      head: [['Area', 'Summary']],
-      body: [
-        ['Primary Goal', formData.goals.initialGoal || 'No goal entered'],
-        ['Total Funnel Ideas', String(totalFunnelItems)],
-        ['Trust Builders Identified', String(trustBuilders)],
-        ['Trust Breakers Identified', String(trustBreakers)],
-        ['Core Pitch', formData.pitch || 'No pitch entered'],
-        ['Green Zone Takeaway', formData.stoplight.green || 'Not entered'],
-        ['Yellow Zone Watchout', formData.stoplight.yellow || 'Not entered'],
-        ['Red Zone Risk', formData.stoplight.red || 'Not entered'],
-      ],
-      styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
-      headStyles: { fillColor: [15, 23, 42] },
-      columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 120 } },
-    });
+    createPdfHeader(
+      doc,
+      'Growth Pro Facilitator Report',
+      `Participant summary • Generated: ${new Date().toLocaleString()}`
+    );
 
-    const finalY = (doc.lastAutoTable?.finalY || 120) + 12;
-
-    doc.setFontSize(14);
-    doc.text('Facilitator Coaching Prompts', 14, finalY);
+    let y = 42;
 
     doc.setFontSize(10);
+    doc.setTextColor(71, 85, 105);
+    doc.text(
+      'Use this report to review completion, participant understanding, specificity of responses, and coaching opportunities.',
+      14,
+      y,
+      { maxWidth: 180 }
+    );
+    y += 16;
+
+    y = addPdfSection(
+      doc,
+      'Completion & Engagement Metrics',
+      [
+        ['Completed Core Sections', `${completedCoreSections} of 6`],
+        ['Total Funnel Ideas', String(totalFunnelItems)],
+        ['Contact Ideas', String(countLines(formData.funnel.contact))],
+        ['Lead Ideas', String(countLines(formData.funnel.lead))],
+        ['Expert Ideas', String(countLines(formData.funnel.expert))],
+        ['Prep Ideas', String(countLines(formData.funnel.prep))],
+        ['Complete Ideas', String(countLines(formData.funnel.complete))],
+        ['Trust Builders Identified', String(trustBuilders)],
+        ['Trust Breakers Identified', String(trustBreakers)],
+      ],
+      y,
+      { headerTitle: 'Growth Pro Facilitator Report', headColor: [15, 23, 42] }
+    );
+
+    y = addPdfSection(
+      doc,
+      'Participant Understanding Review',
+      [
+        ['Primary Goal', formData.goals.initialGoal || 'Not entered'],
+        ['Action Steps', formData.goals.actionSteps || 'Not entered'],
+        ['Community Pitch', formData.pitch || 'Not entered'],
+        ['Workflow Subtasking', formData.subtasks || 'Not entered'],
+        ['Green Zone Behavior', formData.stoplight.green || 'Not entered'],
+        ['Yellow Zone Warning Signs', formData.stoplight.yellow || 'Not entered'],
+        ['Red Zone Danger Signs', formData.stoplight.red || 'Not entered'],
+      ],
+      y,
+      { headerTitle: 'Growth Pro Facilitator Report', headColor: [79, 70, 229] }
+    );
+
+    y = addPdfSection(
+      doc,
+      'Funnel Delighter Evidence',
+      [
+        ['Contact Stage', formData.funnel.contact || 'Not entered'],
+        ['Lead Stage', formData.funnel.lead || 'Not entered'],
+        ['Expert Stage', formData.funnel.expert || 'Not entered'],
+        ['Prep Stage', formData.funnel.prep || 'Not entered'],
+        ['Complete Stage', formData.funnel.complete || 'Not entered'],
+      ],
+      y,
+      { headerTitle: 'Growth Pro Facilitator Report', headColor: [16, 185, 129] }
+    );
+
+    y = addPdfSection(
+      doc,
+      'Trust Learning Evidence',
+      [
+        ['Credibility', formData.trust.credPlus || 'Not entered', formData.trust.credMinus || 'Not entered'],
+        ['Reliability', formData.trust.relPlus || 'Not entered', formData.trust.relMinus || 'Not entered'],
+        ['Intimacy', formData.trust.intPlus || 'Not entered', formData.trust.intMinus || 'Not entered'],
+        ['Orientation', formData.trust.oriPlus || 'Not entered', formData.trust.oriMinus || 'Not entered'],
+      ],
+      y,
+      {
+        headerTitle: 'Growth Pro Facilitator Report',
+        head: ['Trust Area', 'Builder Response', 'Breaker Response'],
+        headColor: [245, 158, 11],
+        fontSize: 8,
+        columnStyles: {
+          0: { cellWidth: 38, fontStyle: 'bold' },
+          1: { cellWidth: 70 },
+          2: { cellWidth: 70 },
+        },
+      }
+    );
+
+    y = addPdfSection(
+      doc,
+      'CLIMB Reflection Evidence',
+      [
+        ['Connect', formData.climb.connectGood || 'Not entered', formData.climb.connectBetter || 'Not entered'],
+        ['Listen & Question', formData.climb.listenGood || 'Not entered', formData.climb.listenBetter || 'Not entered'],
+        ['Identify Opportunity', formData.climb.identifyGood || 'Not entered', formData.climb.identifyBetter || 'Not entered'],
+        ['Message Value', formData.climb.messageGood || 'Not entered', formData.climb.messageBetter || 'Not entered'],
+        ['Build Commitment', formData.climb.commitGood || 'Not entered', formData.climb.commitBetter || 'Not entered'],
+      ],
+      y,
+      {
+        headerTitle: 'Growth Pro Facilitator Report',
+        head: ['CLIMB Step', 'Going Well', 'Better Next Time'],
+        headColor: [37, 99, 235],
+        fontSize: 8,
+        columnStyles: {
+          0: { cellWidth: 42, fontStyle: 'bold' },
+          1: { cellWidth: 68 },
+          2: { cellWidth: 68 },
+        },
+      }
+    );
+
+    const pageHeight = doc.internal.pageSize.height;
+    if (y > pageHeight - 55) {
+      doc.addPage();
+      createPdfHeader(doc, 'Growth Pro Facilitator Report');
+      y = 42;
+    }
+
+    doc.setFontSize(14);
+    doc.setTextColor(79, 70, 229);
+    doc.text('Facilitator Coaching Notes', 14, y);
+
+    doc.setFontSize(10);
+    doc.setTextColor(30, 41, 59);
     doc.text(
       [
-        '1. Where is the participant showing the strongest clarity or momentum?',
-        '2. Which funnel stage needs more ideas or stronger follow-through?',
-        '3. Which trust breaker should be addressed first?',
-        '4. How clear and customer-centered is the participant’s pitch?',
-        '5. What next-step commitment should the participant make after this review?',
+        'Use the participant wording above to check for understanding, specificity, and coachability.',
+        '',
+        'Suggested review questions:',
+        '1. Is the primary goal specific and actionable?',
+        '2. Do the funnel ideas show practical outreach or customer-growth thinking?',
+        '3. Does the pitch clearly communicate customer or community value?',
+        '4. Do trust builders and breakers show self-awareness?',
+        '5. Are the stoplight behaviors concrete enough to coach from?',
+        '6. Do the CLIMB reflections identify both strengths and improvement areas?',
       ],
       14,
-      finalY + 8,
+      y + 8,
       { maxWidth: 180 }
     );
 
