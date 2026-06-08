@@ -124,14 +124,14 @@ function App() {
     <div className="flex h-screen bg-slate-100 text-slate-800 overflow-hidden font-sans selection:bg-indigo-500/20 relative">
      
       {/* Sidebar */}
-      <aside className="w-74 border-r border-slate-200 flex flex-col bg-white shrink-0 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+      <aside className="w-64 border-r border-slate-200 flex flex-col bg-white shrink-0 z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="p-8 border-b border-slate-100 relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-emerald-400" />
           <div className="flex items-center gap-3 mb-1">
             <div className="p-2 bg-indigo-50 rounded-lg ring-1 ring-indigo-100">
               <Trophy className="text-indigo-600 w-5 h-5" />
             </div>
-            <h1 className="text-sm font-black text-slate-900 tracking-tight">GROWTH PRO</h1>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">GROWTH PRO</h1>
           </div>
           <p className="text-[10px] text-indigo-600/70 font-bold uppercase tracking-[0.2em] ml-11">
             Mastery Workbook
@@ -216,9 +216,13 @@ function App() {
                       </div>
                       <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">My Primary Goal</span>
                     </div>
-                    <p className="text-sm font-medium text-slate-600 leading-relaxed italic relative z-10">
-                      {formData.goals.initialGoal || 'Define your main objective in the Blueprint module to see it here.'}
-                    </p>
+                    <textarea
+                      value={formData.goals.initialGoal}
+                      onChange={(e) => updateField('goals', 'initialGoal', e.target.value)}
+                      placeholder="Click here to type your main objective..."
+                      className="w-full bg-transparent border-none p-0 text-sm font-medium text-slate-700 leading-relaxed italic relative z-10 resize-none outline-none focus:ring-0 placeholder-slate-400 custom-scrollbar"
+                      rows={3}
+                    />
                   </div>
 
                   {/* Strategies Card */}
@@ -495,111 +499,5 @@ function App() {
                   </div>
                 ))}
               </div>
-            )}
-
-            {/* MODULE 4 & 5: SINGLE TEXTAREAS */}
-            {(activeModule === 4 || activeModule === 5) && (
-              <div className="bg-white p-10 rounded-2xl border-t-4 border-t-indigo-500 border-x border-b border-slate-200 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500 relative overflow-hidden">
-                <div className="absolute -right-10 -bottom-10 opacity-[0.02] pointer-events-none text-indigo-900">
-                  {activeModule === 4 ? <Users size={400} /> : <Clock size={400} />}
-                </div>
-               
-                <div className="relative z-10">
-                  <div className="mb-8 border-b border-slate-100 pb-6">
-                    <h3 className="text-2xl font-bold mb-2 text-slate-800 flex items-center gap-3">
-                       <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600 border border-indigo-100">
-                        {activeModule === 4 ? <Users size={24} /> : <Clock size={24} />}
-                      </div>
-                      {activeModule === 4 ? 'Community Engagement Pitch' : 'Workflow Subtasking'}
-                    </h3>
-                    <p className="text-base text-slate-500 ml-14">
-                      {activeModule === 4
-                        ? 'Draft your introduction. Focus on the value you provide, not just your title or features.'
-                        : 'Break down your largest, most intimidating goal into small, actionable daily steps.'}
-                    </p>
-                  </div>
-
-                  <textarea
-                    value={activeModule === 4 ? formData.pitch : formData.subtasks}
-                    onChange={(e) => updateField(activeModule === 4 ? 'pitch' : 'subtasks', null, e.target.value)}
-                    placeholder={activeModule === 4
-                      ? "Example: I'm [Name], and I help local business owners..."
-                      : "1. Discovery call\n2. Document upload\n3. Review notes"}
-                    className={`w-full h-[500px] bg-slate-50 rounded-xl p-8 text-slate-800 outline-none border border-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all resize-none shadow-inner placeholder-slate-400 ${activeModule === 4 ? 'text-xl italic leading-relaxed' : 'text-base leading-loose font-mono'}`}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* MODULE 6: CLIMB NOTES */}
-            {activeModule === 6 && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                 <div className="mb-10 px-2 border-b border-slate-200 pb-6">
-                    <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-3 mb-2">
-                       <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600 border border-indigo-100">
-                        <MessageSquare size={24} />
-                      </div>
-                      CLIMB Methodology
-                    </h3>
-                    <p className="text-slate-500 text-sm ml-14">Reflect on your conversations. What went well, and what can be improved?</p>
-                  </div>
-
-                {[
-                  { key: 'connect', label: 'C — Connect', color: 'text-blue-800', bg: 'bg-blue-500', headerBg: 'bg-blue-100' },
-                  { key: 'listen', label: 'L — Listen & Question', color: 'text-indigo-800', bg: 'bg-indigo-500', headerBg: 'bg-indigo-100' },
-                  { key: 'identify', label: 'I — Identify Opportunity', color: 'text-purple-800', bg: 'bg-purple-500', headerBg: 'bg-purple-100' },
-                  { key: 'message', label: 'M — Message Value', color: 'text-pink-800', bg: 'bg-pink-500', headerBg: 'bg-pink-100' },
-                  { key: 'commit', label: 'B — Build Commitment', color: 'text-emerald-800', bg: 'bg-emerald-500', headerBg: 'bg-emerald-100' },
-                ].map((section) => (
-                  <div
-                    key={section.key}
-                    className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden"
-                  >
-                    <div className={`px-8 py-4 ${section.headerBg} flex items-center gap-3 border-b border-slate-200`}>
-                      <div className={`w-3 h-3 rounded-full ${section.bg} shadow-sm`} />
-                      <h4 className={`font-black text-sm uppercase tracking-widest ${section.color}`}>
-                        {section.label}
-                      </h4>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x-2 divide-slate-100">
-                      <div className="p-8 bg-white">
-                        <label className="flex items-center gap-2 text-[11px] font-black text-emerald-700 uppercase tracking-widest mb-4">
-                           <CheckCircle2 size={16} /> Going Well
-                        </label>
-                        <textarea
-                          value={formData.climb[`${section.key}Good`]}
-                          onChange={(e) =>
-                            updateField('climb', `${section.key}Good`, e.target.value)
-                          }
-                          placeholder="What did you execute perfectly?"
-                          className="w-full h-32 bg-slate-50 rounded-xl p-4 text-sm text-slate-700 outline-none border border-slate-300 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-50 shadow-inner transition-all resize-none placeholder-slate-400"
-                        />
-                      </div>
-
-                      <div className="p-8 bg-white">
-                         <label className="flex items-center gap-2 text-[11px] font-black text-amber-700 uppercase tracking-widest mb-4">
-                           <Target size={16} /> Better Next Time
-                        </label>
-                        <textarea
-                          value={formData.climb[`${section.key}Better`]}
-                          onChange={(e) =>
-                            updateField('climb', `${section.key}Better`, e.target.value)
-                          }
-                          placeholder="Where did you stumble? How to fix it?"
-                          className="w-full h-32 bg-slate-50 rounded-xl p-4 text-sm text-slate-700 outline-none border border-slate-300 focus:border-amber-400 focus:ring-4 focus:ring-amber-50 shadow-inner transition-all resize-none placeholder-slate-400"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
 
 export default App;
